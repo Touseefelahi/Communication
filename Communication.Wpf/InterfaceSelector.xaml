@@ -1,0 +1,35 @@
+﻿<UserControl
+    x:Class="Communication.Wpf.InterfaceSelector"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:con="clr-namespace:Stira.Converters.Wpf;assembly=Stira.Converters.Wpf"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Communication.Wpf"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:DesignHeight="450"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
+
+    <StackPanel x:Name="LayoutRoot">
+        <DockPanel Visibility="{Binding IsMinimalUI, Converter={con:BooleanToVisiblity}, ConverterParameter=IC}">
+            <TextBlock Text="Interface Selector" />
+            <CheckBox
+                HorizontalAlignment="Right"
+                Content="Set Manually"
+                IsChecked="{Binding IsManual}" />
+        </DockPanel>
+
+        <ComboBox
+            ItemsSource="{Binding InterfaceList}"
+            DropDownOpened="ComboBox_DropDownOpened"
+            SelectedItem="{Binding SelectedInterface}"
+            Visibility="{Binding IsManual, Converter={con:BooleanToVisiblity}, ConverterParameter=IC}" />
+        <DockPanel Visibility="{Binding IsMinimalUI, Converter={con:BooleanToVisiblity}, ConverterParameter=IC}">
+            <TextBox
+                VerticalAlignment="Center"
+                Text="{Binding SelectedInterface.IP}"
+                TextChanged="TextBox_TextChanged"
+                Visibility="{Binding IsManual, Converter={con:BooleanToVisiblity}, ConverterParameter=NC}" />
+        </DockPanel>
+    </StackPanel>
+</UserControl>
