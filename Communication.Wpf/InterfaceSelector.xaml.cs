@@ -92,9 +92,15 @@ namespace Communication.Wpf
         {
             InitializeComponent();
             LayoutRoot.DataContext = this;
+
+            Loaded += InterfaceSelector_Loaded;
+            //NetworkChange.NetworkAddressChanged += AddressChangedCallback;
+        }
+
+        private void InterfaceSelector_Loaded(object sender, RoutedEventArgs e)
+        {
             SelectedInterface = new AddressInfo("", 1500, 100);
             UpdateInterfaces();
-            //NetworkChange.NetworkAddressChanged += AddressChangedCallback;
         }
 
         //private void AddressChangedCallback(object? sender, EventArgs e)
@@ -124,7 +130,7 @@ namespace Communication.Wpf
             //    }
             //}
 
-            if (InterfaceList.Count > 0 && SelectedInterface is null)
+            if (InterfaceList.Count > 0 && string.IsNullOrEmpty(SelectedInterface.IP))
             {
                 SelectedInterface = InterfaceList[0];
             }
