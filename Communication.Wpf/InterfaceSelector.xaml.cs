@@ -1,8 +1,6 @@
 ﻿using Communication.Core;
 using System;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Net.NetworkInformation;
 using System.Windows;
 using System.Windows.Controls;
 
@@ -13,57 +11,29 @@ namespace Communication.Wpf
     /// </summary>
     public partial class InterfaceSelector : UserControl
     {
-        /// <summary>
-        /// To display only Combobox set this flag to high
-        /// </summary>
-        public bool IsMinimalUI
-        {
-            get { return (bool)GetValue(IsMinimalUIProperty); }
-            set { SetValue(IsMinimalUIProperty, value); }
-        }
-
-        // Using a DependencyProperty as the backing store for IsMinimalUI.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty IsMinimalUIProperty =
-            DependencyProperty.Register("IsMinimalUI", typeof(bool), typeof(InterfaceSelector), new PropertyMetadata(false));
-
-        /// <summary>
-        /// To set IP manually for some reason we can set it by enabling this check
-        /// </summary>
-        public bool IsManual
-        {
-            get { return (bool)GetValue(IsManualProperty); }
-            set { SetValue(IsManualProperty, value); }
-        }
+        // Using a DependencyProperty as the backing store for InterfaceList.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty InterfaceListProperty =
+            DependencyProperty.Register("InterfaceList", typeof(ObservableCollection<AddressInfo>), typeof(InterfaceSelector), new PropertyMetadata(null, InterfacesChanging));
 
         // Using a DependencyProperty as the backing store for IsManual.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty IsManualProperty =
             DependencyProperty.Register("IsManual", typeof(bool), typeof(InterfaceSelector), new PropertyMetadata(false, ManualIPSelectionChanged));
 
-        private static void ManualIPSelectionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is InterfaceSelector interfaceSelector)
-            {
-                interfaceSelector.IsManual = (bool)e.NewValue;
-            }
-        }
-
-        public AddressInfo SelectedInterface
-        {
-            get { return (AddressInfo)GetValue(SelectedInterfaceProperty); }
-            set { SetValue(SelectedInterfaceProperty, value); }
-        }
+        // Using a DependencyProperty as the backing store for IsMinimalUI.  This enables animation, styling, binding, etc...
+        public static readonly DependencyProperty IsMinimalUIProperty =
+            DependencyProperty.Register("IsMinimalUI", typeof(bool), typeof(InterfaceSelector), new PropertyMetadata(false));
 
         // Using a DependencyProperty as the backing store for SelectedInterface.  This enables animation, styling, binding, etc...
         public static readonly DependencyProperty SelectedInterfaceProperty =
             DependencyProperty.Register("SelectedInterface", typeof(AddressInfo), typeof(InterfaceSelector), new PropertyMetadata(null, SelectedInterfaceChanged));
 
-        private static void SelectedInterfaceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        public InterfaceSelector()
         {
-            if (d is InterfaceSelector interfaceSelector)
-            {
-                if (e.NewValue is null) return;
-                interfaceSelector.SelectedInterface = (AddressInfo)e.NewValue;
-            }
+            InitializeComponent();
+            LayoutRoot.DataContext = this;
+
+            Loaded += InterfaceSelector_Loaded;
+            //NetworkChange.NetworkAddressChanged += AddressChangedCallback;
         }
 
         public ObservableCollection<AddressInfo> InterfaceList
@@ -75,9 +45,29 @@ namespace Communication.Wpf
             set { SetValue(InterfaceListProperty, value); }
         }
 
-        // Using a DependencyProperty as the backing store for InterfaceList.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty InterfaceListProperty =
-            DependencyProperty.Register("InterfaceList", typeof(ObservableCollection<AddressInfo>), typeof(InterfaceSelector), new PropertyMetadata(null, InterfacesChanging));
+        /// <summary>
+        /// To set IP manually for some reason we can set it by enabling this check
+        /// </summary>
+        public bool IsManual
+        {
+            get { return (bool)GetValue(IsManualProperty); }
+            set { SetValue(IsManualProperty, value); }
+        }
+
+        /// <summary>
+        /// To display only Combobox set this flag to high
+        /// </summary>
+        public bool IsMinimalUI
+        {
+            get { return (bool)GetValue(IsMinimalUIProperty); }
+            set { SetValue(IsMinimalUIProperty, value); }
+        }
+
+        public AddressInfo SelectedInterface
+        {
+            get { return (AddressInfo)GetValue(SelectedInterfaceProperty); }
+            set { SetValue(SelectedInterfaceProperty, value); }
+        }
 
         private static void InterfacesChanging(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
@@ -88,13 +78,26 @@ namespace Communication.Wpf
             }
         }
 
-        public InterfaceSelector()
+        private static void ManualIPSelectionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            InitializeComponent();
-            LayoutRoot.DataContext = this;
+            if (d is InterfaceSelector interfaceSelector)
+            {
+                interfaceSelector.IsManual = (bool)e.NewValue;
+            }
+        }
 
-            Loaded += InterfaceSelector_Loaded;
-            //NetworkChange.NetworkAddressChanged += AddressChangedCallback;
+        private static void SelectedInterfaceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is InterfaceSelector interfaceSelector)
+            {
+                if (e.NewValue is null) return;
+                interfaceSelector.SelectedInterface = (AddressInfo)e.NewValue;
+            }
+        }
+
+        private void ComboBox_DropDownOpened(object sender, EventArgs e)
+        {
+            UpdateInterfaces();
         }
 
         private void InterfaceSelector_Loaded(object sender, RoutedEventArgs e)
@@ -107,6 +110,24 @@ namespace Communication.Wpf
         //{
         //    Application.Current.Dispatcher.Invoke(new Action(() => UpdateInterfaces()));
         //}
+
+        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (sender is TextBox textBox)
+            {
+                if (NetworkService.ValidateIPv4(textBox.Text))
+                {
+                    if (SelectedInterface is null)
+                    {
+                        SelectedInterface = new AddressInfo(textBox.Text, 1500, 1000);
+                    }
+                    else
+                    {
+                        SelectedInterface = SelectedInterface with { IP = textBox.Text };
+                    }
+                }
+            }
+        }
 
         private void UpdateInterfaces()
         {
@@ -134,29 +155,6 @@ namespace Communication.Wpf
             {
                 SelectedInterface = InterfaceList[0];
             }
-        }
-
-        private void TextBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            if (sender is TextBox textBox)
-            {
-                if (NetworkService.ValidateIPv4(textBox.Text))
-                {
-                    if (SelectedInterface is null)
-                    {
-                        SelectedInterface = new AddressInfo(textBox.Text, 1500, 1000);
-                    }
-                    else
-                    {
-                        SelectedInterface = SelectedInterface with { IP = textBox.Text };
-                    }
-                }
-            }
-        }
-
-        private void ComboBox_DropDownOpened(object sender, EventArgs e)
-        {
-            UpdateInterfaces();
         }
     }
 }

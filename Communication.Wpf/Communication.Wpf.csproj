@@ -28,8 +28,12 @@ v1.0.0: Basic combo box with selection for manual IP
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Communication.Core" Version="1.0.0" />
+		<!--<PackageReference Include="Communication.Core" Version="1.0.0" />-->
 		<PackageReference Include="Stira.Converters.Wpf" Version="1.1.0" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Communication\Communication.Core.csproj" />
 	</ItemGroup>
 
 </Project>
